@@ -123,7 +123,7 @@ enum class enum_PopupRun : uint8
 	Tutorial,
 	StartStoryTutorial,
 };
-
+//팝업 스타일
 UENUM(BlueprintType)
 enum class enum_PopupStyle : uint8
 {
@@ -267,4 +267,22 @@ public:
 	FString PlayFabID;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FDateTime LastLogin;
+};
+
+
+// 옵션 스타일
+UENUM(BlueprintType)
+enum class enum_OptionStyle : uint8
+{
+	OptionSound, //사운드
+	OptionAlarm, //알림
+	OptionAccount, //계정
+};
+//옵션 종류
+UENUM(BlueprintType)
+enum class enum_Option : uint8
+{
+	Logout, //로그아웃
+	GameExit, //게임종류
+	Withdrawal, //계정탈퇴
 };
