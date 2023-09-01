@@ -146,7 +146,7 @@ public class Test_LidarSample : ModuleRules
 			"Json" ,
 			"JsonUtilities",
 			// 외부 플러그인
-			"UROSBridge","AudioExtensions",
+			"AudioExtensions", //"UROSBridge",
 			// "FirebaseAuthentication",
 			 });
 
