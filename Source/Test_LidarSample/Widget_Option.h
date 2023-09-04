@@ -48,4 +48,5 @@ public:
 		class UButton* Tab_BtnAlarm;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
 		class UButton* Tab_BtnAccount;
+
 };

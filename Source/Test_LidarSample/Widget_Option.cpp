@@ -13,6 +13,7 @@ void UWidget_Option::NativeOnInitialized()
 	Tab_BtnAlarm->OnClicked.AddDynamic(this, &UWidget_Option::Clicked_Alarm);
 	Tab_BtnAccount->OnClicked.AddDynamic(this, &UWidget_Option::Clicked_Account);
 }
+//옵션 탭 선택
 void UWidget_Option::SetOptionStyle(enum_OptionStyle style) 
 {
 	switch (style)
@@ -36,26 +37,26 @@ void UWidget_Option::SetOptionStyle(enum_OptionStyle style)
 		break;
 	}
 }
-
+//선택 탭 버튼 초기화
 void UWidget_Option::InitTabButton()
 {
 	Clicked_Sound();
 }
-
+//사운드 버튼 클릭
 void UWidget_Option::Clicked_Sound()
 {
 	CurrentTabNumber = 0;
 	SetOptionStyle(enum_OptionStyle::OptionSound);
 	UpdateButtonStyle();
 }
-
+// 알림 버튼 클릭
 void UWidget_Option::Clicked_Alarm()
 {
 	CurrentTabNumber = 1;
 	SetOptionStyle(enum_OptionStyle::OptionAlarm);
 	UpdateButtonStyle();
 }
-
+//계정 버튼 클릭
 void UWidget_Option::Clicked_Account()
 {
 	CurrentTabNumber = 2;
