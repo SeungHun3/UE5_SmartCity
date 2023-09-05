@@ -285,4 +285,5 @@ enum class enum_Option : uint8
 	Logout, //로그아웃
 	GameExit, //게임종류
 	Withdrawal, //계정탈퇴
+	AlarmAgreement, //알림동의
 };
