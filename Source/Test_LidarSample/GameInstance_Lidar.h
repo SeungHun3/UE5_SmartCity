@@ -15,7 +15,7 @@ struct FLidarData
 public:
 	//- id : 객체 번호
 	UPROPERTY(BlueprintReadWrite)
-		int ID;
+		int ID =0;
 	//- type : 객체 타입(사람, 자동차, …)
 	UPROPERTY(BlueprintReadWrite)
 		FString Type;
@@ -30,7 +30,7 @@ public:
 		TArray<float> lwh;
 	//- heading : 객체 이동 방향(radian)
 	UPROPERTY(BlueprintReadWrite)
-		float heading;
+		float heading = 0.0f;
 	//- tracklet : 객체의 이동 궤적
 	UPROPERTY(BlueprintReadWrite)
 		TArray<FVector> tracklet;

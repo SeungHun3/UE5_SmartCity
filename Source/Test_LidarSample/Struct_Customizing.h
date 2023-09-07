@@ -27,9 +27,9 @@ public:
 		FString ItemClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		int RemainingUses;
+		int RemainingUses=0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		int UnitPrice;
+		int UnitPrice =0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FString colorData;
 
@@ -56,7 +56,7 @@ public:
 		FString ItemID;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		int ItemPrice;
+		int ItemPrice = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		FString StoreID;
@@ -140,7 +140,7 @@ struct FChecking_Reward : public FTableRowBase
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		int Gold;
+		int Gold = 0;
 };
 
 // 퀘스트 진행사항
@@ -160,7 +160,7 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadOnly)
 		FString Explain;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		int reward;
+		int reward =0;
 };
 
 USTRUCT(Atomic, BlueprintType)

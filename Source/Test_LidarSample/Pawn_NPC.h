@@ -31,12 +31,12 @@ struct FNpcCustomizing_Struct : public FTableRowBase
 	GENERATED_USTRUCT_BODY()
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FVector NpcLocation;
+	FVector NpcLocation = FVector(0.0f, 0.0f,0.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FName NpcName;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		enum_NPCMultiType Type;
+		enum_NPCMultiType Type = enum_NPCMultiType::Single;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		USkeletalMesh* Boddy;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
