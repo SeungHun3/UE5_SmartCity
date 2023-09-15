@@ -5,11 +5,12 @@
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 #include "PlayerState_Solaseado.h"
+#include "Actor_HTTPRequest.h"
 
 void AGameModeBase_Solaseado::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 }
 
 void AGameModeBase_Solaseado::OpenStreamLevel(enum_Level level)
@@ -65,7 +66,7 @@ void AGameModeBase_Solaseado::StartFadeOut(float From, float To, float Duration)
 // 페이드 인
 void AGameModeBase_Solaseado::FadeIn()
 {
-	if(FadeOn)
+	if (FadeOn)
 		StartFadeOut(0.f, 1.f, FadeDuration);
 }
 // 페이드 아웃
@@ -82,7 +83,7 @@ void AGameModeBase_Solaseado::CreatePopup()
 //////////////////////////////////////////////////////////////////////////////////////////
 // 레벨 이동 함수
 // BlueprintCallable Func
-void AGameModeBase_Solaseado::MoveLevel(enum_Level level , bool bFade)
+void AGameModeBase_Solaseado::MoveLevel(enum_Level level, bool bFade)
 {
 	FOpenLevel.level = level;
 	OpenLevel = FOpenLevel.getLevelName();
@@ -106,7 +107,7 @@ void AGameModeBase_Solaseado::LoadLevel()
 	ChangeLevel(OpenLevel);
 }
 
-void AGameModeBase_Solaseado::ChangeLevel(const FString& openLevel , bool bFade)
+void AGameModeBase_Solaseado::ChangeLevel(const FString& openLevel, bool bFade)
 {
 	FLatentActionInfo latent;
 	latent.CallbackTarget = this;
@@ -150,7 +151,7 @@ TArray<FString> AGameModeBase_Solaseado::Check_OutsideLevel(const FString& targe
 
 	const TCHAR* str1 = FCString::Strstr(*LevelName, *str);
 	FString Level_Num = FString(str1 + str.Len());
-	
+
 	// 레벨 네임 1~16 까지. 환산식에선 배열구조 0 ~ 15 사용 . 추가 변환값 +1 원상 복구.
 	int LevelRow = getTargetLevelRow(Level_Num);
 	int LevelCol = getTargetLevelCol(Level_Num);
@@ -162,7 +163,7 @@ TArray<FString> AGameModeBase_Solaseado::Check_OutsideLevel(const FString& targe
 	bool bLift = false;
 
 	if (LevelRow + 1 < MaxRow)
-	{								
+	{
 		// +1 추가 변환값.
 		OutSideLevel.Add(str + FString::FromInt((LevelRow + 1) * MaxCol + LevelCol + 1));
 		bUp = true;
@@ -243,7 +244,7 @@ void AGameModeBase_Solaseado::Check_UnloadOutsideLevel()
 		Seamless_LoadOutsideLevel(Check_OutsideLevel(OpenLevel));
 		return;
 	}
-	
+
 	FLatentActionInfo latent;
 	latent.CallbackTarget = this;
 	latent.UUID = GetUniqueID();
@@ -261,7 +262,7 @@ void AGameModeBase_Solaseado::Check_LoadOutsideLevel()
 	FString Check_OutsideloadLevel;
 	if (Check_LoadLevel.Num() > 0)
 	{
-		if(Check_LoadLevel.IsValidIndex(0))
+		if (Check_LoadLevel.IsValidIndex(0))
 			Check_OutsideloadLevel = Check_LoadLevel[0];
 	}
 	else

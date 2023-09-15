@@ -14,6 +14,7 @@
 #include "ActorComponent_Playfab.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FUpdateFriend);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FUpdateFriendSlot);
 
 
 // 금칙어 정보 
@@ -74,12 +75,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TMap<FString, FFriendStruct> FriendList;	//현재 친구 목록
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TMap<FString, FFriendStruct> BlockList;
+
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TMap<FString, FFriendStruct> FriendRequestList;	//친구 신청 목록
 
 	UPROPERTY(BlueprintAssignable)
 	FUpdateFriend UpdateFriend;
+
+	//친구창 슬롯 업데이트 
+	UPROPERTY(BlueprintAssignable)
+	FUpdateFriendSlot UpdateFriendSlot;
 	//////////////////////////////////////////
 
 protected:
@@ -248,13 +256,12 @@ public:
 	// 친구 업데이트
 	void UpdateFriendList(const PlayFab::ClientModels::FGetFriendsListResult& result);
 
-	// 친구 리스트 갱신
+	// 친구 업데이트
 	UFUNCTION(BlueprintCallable)
-		void getProfileEvent();
+	void CallUpdateFriend();
 
-	// 로그인 시간 갱신
+	// 친구 업데이트
 	UFUNCTION(BlueprintCallable)
-	void UpdateLoginTimeEvent();
-	// 로그인 업데이트
-	void UpdateLoginTIme(const PlayFab::ClientModels::FUpdateUserDataResult& result);
+	bool UpdateFriendLoginTime(FString UserID,FDateTime LoginTime);
+
 };

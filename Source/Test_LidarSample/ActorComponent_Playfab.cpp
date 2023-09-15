@@ -6,9 +6,11 @@
 #include "Engine/Engine.h"
 #include "Widget/Checking_Folder/Widget_CheckingAttandance_Main.h"
 #include "GameInstance_Solaseado.h"
+#include "GameModeBase_Solaseado.h"
 
 #include "Core/PlayFabClientAPI.h"
 #include "Misc/DateTime.h"
+#include "Actor_HTTPRequest.h"
 
 #include "PlayFabJsonObject.h"
 #include "PlayFabJsonValue.h"
@@ -449,6 +451,14 @@ void UActorComponent_Playfab::ScriptResponseEvent(FJsonValue* value)
 	{
 		getFriendListEvent();
 	}
+	else if (Selection == "AddBlock")
+	{
+		getFriendListEvent();
+	}
+	else if (Selection == "BlockFriend")
+	{
+		getFriendListEvent();
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -495,7 +505,7 @@ void UActorComponent_Playfab::getUserTitleData(FString targetTitle)
 				{
 					UserTitleData.Add(it, record->Value);
 					// 캐릭터 생성 여부 체크
-					if (it == FString("Createcharacter"))
+					if (FString(it)== FString("Createcharacter"))
 					{
 						if (*record->Value == FString("1"))
 						{
@@ -550,6 +560,8 @@ void UActorComponent_Playfab::getIngamePlayerData()
 	//GetMyQuestToServer("Tutorial");
 	// 공지 정보 체크
 	getNoticeEvent(3);
+	//친구 목록 업데이트
+	getFriendListEvent();
 	// updateUserTitleData(UserTitleData);
 }
 // 유저 닉네임
@@ -1200,73 +1212,64 @@ void UActorComponent_Playfab::getFriendListEvent()
 				);
 }
 
+//친구&차단 목록 갱신
 void UActorComponent_Playfab::UpdateFriendList(const PlayFab::ClientModels::FGetFriendsListResult& result)
 {
-	bool bBlock = false;
 	FriendList.Empty();
+	BlockList.Empty();
+
 	for (auto it : result.Friends)
 	{
-		//if (it.Tags.Num() > 0)
-		//	bBlock = true;
-
-		//it.Profile->L
-		//updateFriendsList(it.TitleDisplayName, it.FriendPlayFabId, bBlock);
-		//it.Profile
+		
 		if (true /* 여기에 한국인지 체크*/)
 		{
 			UE_LOG(LogTemp, Log, TEXT("// UpdateFriendList :: city : %s , time %d : %d "), *it.Profile->Locations[0].City, it.Profile->LastLogin.mValue.UtcNow().GetHour()+9%24, it.Profile->LastLogin.mValue.UtcNow().GetMinute());
-
 			
 			FFriendStruct sTemp;
-			sTemp.LastLogin= it.Profile->LastLogin.mValue;
+			//마지막 접속 시간은 포톤 웹훅으로 대체되었다.
+			//sTemp.LastLogin= it.Profile->LastLogin.mValue;
 			sTemp.PlayFabID= it.Profile->PlayerId;
 			sTemp.TitleID= it.Profile->DisplayName;
-			FriendList.Add(sTemp.TitleID, sTemp);
-			
+
+			//Tag로 차단인지 친구인지 구분한다.
+			if (it.Tags.Num() > 0)
+			{
+				BlockList.Add(sTemp.TitleID, sTemp);
+			}
+			else
+			{
+				FriendList.Add(sTemp.TitleID, sTemp);
+				//로그아웃 시간을 구하는 함수
+				Cast<AGameModeBase_Solaseado>(GetWorld()->GetAuthGameMode())->HTTPRequestActor->GetUserLogoutTime(sTemp.TitleID);
+			}
 		}
 	}
 
+	//친구없고 블랙리스트만 있을경우 업데이트
+	if (FriendList.IsEmpty())
+	{
+		UpdateFriendSlot.Broadcast();
+	}
 	UpdateFriend.Broadcast();
 }
 
-void UActorComponent_Playfab::getProfileEvent()
+//외부 블루프린트에서 호출해주기 위해서
+void UActorComponent_Playfab::CallUpdateFriend()
 {
-	PlayFabClientPtr ClientAPI = IPlayFabModuleInterface::Get().GetClientAPI();
-
-	//ClientAPI->UpdateAvatarUrl();
-	//FUpdateCharacterDataRequest;
-	//PlayFab::ClientModels::FUpdateAvatarUrlRequest;
-	//FUpdateCharacterDataRequest();
-
-	PlayFab::ClientModels::FGetFriendsListRequest request;
-	request.ProfileConstraints->ShowCreated = true;
-
-
-
-	//for (auto it : FriendList)
-	//{
-	//	if (it.Value.TitleID != "sdsd")
-	//	{
-	//
-	//	}
-	//}
+	UpdateFriendSlot.Broadcast();
 }
 
-void UActorComponent_Playfab::UpdateLoginTimeEvent()
+//찾는 유저가 친구목록에 있는지 체크한다.
+bool UActorComponent_Playfab::UpdateFriendLoginTime(FString UserID, FDateTime LoginTime)
 {
-	PlayFabClientPtr ClientAPI = IPlayFabModuleInterface::Get().GetClientAPI();
-	PlayFab::ClientModels::FUpdateUserDataRequest request;
+	if (FriendList.Find(UserID))
+	{
+		FriendList.Find(UserID)->LastLogin = LoginTime;
+		return true;
+	}
+	
+	return false;
 
-
-	ClientAPI->UpdateUserData(
-		request,
-		PlayFab::UPlayFabClientAPI::FUpdateUserDataDelegate::CreateUObject(this, &UActorComponent_Playfab::UpdateLoginTIme),
-		PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &UActorComponent_Playfab::ErrorScript)
-	);
 }
 
-void UActorComponent_Playfab::UpdateLoginTIme(const PlayFab::ClientModels::FUpdateUserDataResult& result)
-{
-	UKismetMathLibrary::UtcNow();
-}
 ////////////////////////////////////////////////

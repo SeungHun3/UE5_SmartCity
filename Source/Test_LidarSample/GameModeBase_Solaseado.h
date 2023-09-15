@@ -47,13 +47,13 @@ public:
 };
 
 // DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStreamLevelFinish, enum_Level, level);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStreamLevelFinish, const FString& , level);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStreamLevelFinish, const FString&, level);
 
 UCLASS()
 class TEST_LIDARSAMPLE_API AGameModeBase_Solaseado : public AGameModeBase
 {
 	GENERATED_BODY()
-	
+
 public:
 	virtual void BeginPlay() override;
 
@@ -83,6 +83,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		class AActor_PhotonVoice* PhotonVoice;
 
+	// HTTP 액터
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		class AActor_HTTPRequest* HTTPRequestActor;
 private:
 	// 페이드 진행 시간
 	float FadeDuration = 3.5f;
@@ -136,7 +139,7 @@ public:
 		void LoadStreamEvent();
 	UFUNCTION()
 		void LoadStreamLevelFinish();
-	
+
 	UFUNCTION(BlueprintCallable, Category = "SH_")
 		void MoveLevel(enum_Level level, bool bFade = true);
 	// fade in & out x , 빠른 레벨 이동
@@ -146,7 +149,7 @@ public:
 	// 
 	UFUNCTION(BlueprintCallable, Category = "SH_")
 		void SeamlessLevelLoad(const FString& openLevel);
-	
+
 	// 팝업 추가 함수
 	UFUNCTION(BlueprintImplementableEvent)
 		void WidgetCreate_Popup();
@@ -154,7 +157,7 @@ public:
 		void CreatePopup();
 	UFUNCTION(BlueprintImplementableEvent)
 		void InsufficientFunds_Popup();
-	
+
 	UPROPERTY(BlueprintReadWrite, Category = "MyActors")
 		TArray<AActor*> POIActors;
 	///////////////////////////////////////
@@ -163,6 +166,6 @@ public:
 	// return = state
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	class APlayerState_Solaseado* get_PlayerState_Solaseado();
+		class APlayerState_Solaseado* get_PlayerState_Solaseado();
 
 };

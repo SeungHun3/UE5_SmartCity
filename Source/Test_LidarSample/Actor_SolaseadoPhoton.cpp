@@ -23,7 +23,7 @@ AActor_SolaseadoPhoton::AActor_SolaseadoPhoton() : serverAddress(TEXT(Photon_Ser
 	static ConstructorHelpers::FObjectFinder<UDataTable> FindNPCTableData(TEXT("DataTable'/Game/Project/DataTable/NPC/Data_NPC.Data_NPC'"));
 	if (FindNPCTableData.Succeeded())
 		CustomNPCDataTable = FindNPCTableData.Object;
-}	
+}
 
 AActor_SolaseadoPhoton::~AActor_SolaseadoPhoton()
 {
@@ -58,7 +58,7 @@ void AActor_SolaseadoPhoton::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	
+
 	unsigned long t = GETTIMEMS();
 	if ((t - lastUpdateTime) > 100)
 	{
@@ -85,8 +85,8 @@ void AActor_SolaseadoPhoton::ConnectLogin(const FString& username)
 		Photon::ConnectionProtocol::DEFAULT, false, ExitGames::LoadBalancing::RegionSelectionMode::SELECT, false); //  (nByte)0U, false, ExitGames::LoadBalancing::RegionSelectionMode::SELECT
 	m_pListener->SetClient(m_pClient);
 	m_pListener->Connect(TCHAR_TO_UTF8(*username), TCHAR_TO_UTF8(*serverAddress));
-	
-	
+
+
 	//더미생성만
 	dummy_pListener = new PhotonListner_Solaseado(this);
 	dummy_pClient = new ExitGames::LoadBalancing::Client(*dummy_pListener, TCHAR_TO_UTF8(*AppID), TCHAR_TO_UTF8(*appVersion),
@@ -131,7 +131,7 @@ void AActor_SolaseadoPhoton::UpdateRoomList(const TMap<int, int>& Channel_Count)
 		PlayerNames.Add(PlayerName);
 	}
 
-	ChangeViewCount(Channel_Count,PlayerNames);
+	ChangeViewCount(Channel_Count, PlayerNames);
 }
 
 void AActor_SolaseadoPhoton::CloseDummy()
@@ -250,7 +250,7 @@ void AActor_SolaseadoPhoton::AddPlayers(int playerNr, const ExitGames::Common::J
 			target->PlayerNr = playerNr;
 
 			PlayerList.Add(target);
-			Blueprint_AddPlayer(playerNr , name);
+			Blueprint_AddPlayer(playerNr, name);
 
 			//UE_LOG(LogTemp, Log, TEXT("// addplayer yaw :: %d , local : %d"), playerNr, LocalPlayer->PlayerNr);
 			MoveAndRotation(LocalPlayer->GetActorLocation(), LocalPlayer->GetActorRotation().Yaw);
@@ -301,7 +301,7 @@ void AActor_SolaseadoPhoton::updatePlayerProperties(int playerNr, const Hashtabl
 		}
 	}
 
-	
+
 	for (auto it : PlayerList)
 	{
 		if (it->PlayerNr == playerNr)
@@ -398,7 +398,7 @@ void AActor_SolaseadoPhoton::GetPlayerAnim(int playerNr, int Anim)
 void AActor_SolaseadoPhoton::ConnectComplete(void)
 {
 	//UE_LOG(LogTemp, Log, TEXT("// ConnectComplete "));
-	
+
 	InitPlayerData_Implementation();
 }
 
@@ -409,12 +409,12 @@ void AActor_SolaseadoPhoton::CreateChannelComplete(const ExitGames::Common::JStr
 
 void AActor_SolaseadoPhoton::CreateRoomComplete(const ExitGames::Common::JString& map)
 {
-	
+
 }
 
 void AActor_SolaseadoPhoton::JoinRoomComplete(const ExitGames::Common::JString& map, const ExitGames::Common::JString& channel)
 {
-	
+
 }
 
 // 룸에 들어왔을때 호출
@@ -482,7 +482,7 @@ void AActor_SolaseadoPhoton::updateRoomProperties(const Hashtable& changes)
 
 		for (int i = 1; i <= n; ++i)
 		{
-			str = "NPC"+FString::FromInt(i);
+			str = "NPC" + FString::FromInt(i);
 			Object const* objTemp = changes.getValue(TCHAR_TO_UTF8(*str));
 
 			if (objTemp)
@@ -496,7 +496,7 @@ void AActor_SolaseadoPhoton::updateRoomProperties(const Hashtable& changes)
 	if (NPCList.IsValidIndex(0))
 	{
 		for (auto it : NPCList)
-		{		
+		{
 			Object const* objTemp = changes.getValue(TCHAR_TO_UTF8(*(it->CharacterID)));
 			if (objTemp)
 			{
@@ -614,7 +614,7 @@ void AActor_SolaseadoPhoton::AddNpc(const FString& NpcId, FVector Loc, FVector R
 	if (target)
 	{
 		NPCList.Add(target);
-		target->eNPCType= enum_NPCMultiType::Multi;
+		target->eNPCType = enum_NPCMultiType::Multi;
 		target->CharacterID = NpcId;
 		target->InitNPC(NpcId);
 	}
@@ -632,7 +632,7 @@ void AActor_SolaseadoPhoton::ClearNpc()
 }
 
 //NPC 이동 좌표를 서버에 보낸다.
-void AActor_SolaseadoPhoton::NPCMove(const APawn_NPC* pawnNPC,FVector NpcLocation)
+void AActor_SolaseadoPhoton::NPCMove(const APawn_NPC* pawnNPC, FVector NpcLocation)
 {
 	m_pListener->SetNPCMove(pawnNPC->CharacterID, NpcLocation);
 }
@@ -654,16 +654,16 @@ void AActor_SolaseadoPhoton::InputAnimationState(enum_PlayerAnimationState _Stat
 
 //// 친구
 
-void AActor_SolaseadoPhoton::SendFriendInfo(int Target,FString PlayfabID)
+void AActor_SolaseadoPhoton::SendFriendInfo(int Target, FString PlayfabID)
 {
 	if (m_pListener)
 	{
-		m_pListener->SetFriendRequest(Target,PlayfabID);
+		m_pListener->SetFriendRequest(Target, PlayfabID);
 	}
 }
 
 //다른 플레이어에게 받은 친구 신청목록 함수에 처리한다.
-void AActor_SolaseadoPhoton::RecvFriendRequest(int PlayerNum,const FString& FriendPlayFabID)
+void AActor_SolaseadoPhoton::RecvFriendRequest(int PlayerNum, const FString& FriendPlayFabID)
 {
 	FString PlayerName;
 
@@ -688,7 +688,7 @@ void AActor_SolaseadoPhoton::InitPlayerData_Implementation()
 	// LocalPlayer -> playfab 에서 값 받아오고
 	//InputCharacterInfo(key_값 , 플레이앱 코스튬 데이터);
 
-	const TArray<FString> &PlayFabData = LocalPlayer->UploadPlayer();
+	const TArray<FString>& PlayFabData = LocalPlayer->UploadPlayer();
 
 	DataCount = 0;
 
