@@ -13,5 +13,7 @@ UCLASS()
 class TEST_LIDARSAMPLE_API UWidget_FriendList : public UUserWidget
 {
 	GENERATED_BODY()
-	
+public:
+	UFUNCTION(BlueprintCallable)
+	FTimespan GetElapsedTime(FDateTime LogoutTime); // http 요청에 사용할 함수
 };

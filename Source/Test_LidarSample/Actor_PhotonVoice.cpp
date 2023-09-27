@@ -7,6 +7,7 @@
 #include "Photon/Console.h"
 #include "Actor_PhotonAudioIn.h"
 #include "Actor_PhotonAudioOut.h"
+#include "ActorComponent_PlayfabStore.h"
 #include "Kismet/GameplayStatics.h"
 
 using namespace ExitGames::Voice;
@@ -26,8 +27,6 @@ AActor_PhotonVoice::AActor_PhotonVoice() :
 void AActor_PhotonVoice::BeginPlay(void)
 {
 	Super::BeginPlay();
-	srand(GETTIMEMS());
-	mpPhotonLib = new SH_PhotonVoiceListener(ExitGames::Common::JString(TCHAR_TO_UTF8(*AppID)), ExitGames::Common::JString(TCHAR_TO_UTF8(*appVersion)), this, this,this);
 }
 
 
@@ -40,17 +39,19 @@ void AActor_PhotonVoice::EndPlay(const EEndPlayReason::Type endPlayReason)
 // 마이크 캡처, 인식
 AActor_PhotonAudioIn* AActor_PhotonVoice::createAudioIn()
 {
-	return mPhotonAudioIn=GetWorld()->SpawnActor<AActor_PhotonAudioIn>();
+	return mPhotonAudioIn=GetWorld()->SpawnActor<AActor_PhotonAudioIn>(getAudioIn,FTransform());
 }
 void AActor_PhotonVoice::destroyAudioIn(AActor_PhotonAudioIn* a)
 {
+	
 	GetWorld()->DestroyActor(a);
 }
 
 // 보이스 챗 출력 
 AActor_PhotonAudioOut* AActor_PhotonVoice::createAudioOut()
 {
-	mPhotonAudioOut.Add(GetWorld()->SpawnActor<AActor_PhotonAudioOut>());
+	mPhotonAudioOut.Add(GetWorld()->SpawnActor<AActor_PhotonAudioOut>(getAudioOut, FTransform()));
+
 	return mPhotonAudioOut[mPhotonAudioOut.Num()-1];
 }
 
@@ -73,9 +74,23 @@ void AActor_PhotonVoice::Tick(float DeltaSeconds)
 // 포톤 보이스 접속. Playfab ID 통일하기.
 void AActor_PhotonVoice::Connect(const FString& Vociename)
 {
-	Console::get().writeLine(L"// Connecting...");
-	mpPhotonLib->connect(TCHAR_TO_UTF8(*Vociename));
+	ConnectLogin(Vociename);
 }
+
+void AActor_PhotonVoice::ConnectLogin(const FString& username)
+{
+	Console::get().writeLine(L"// Connecting...");
+
+	srand(GETTIMEMS());
+	mpPhotonLib = new SH_PhotonVoiceListener(this, this, this);
+	PhotonClient = new ExitGames::LoadBalancing::Client(*mpPhotonLib, TCHAR_TO_UTF8(*AppID), TCHAR_TO_UTF8(*appVersion),
+		ExitGames::Photon::ConnectionProtocol::DEFAULT, false, ExitGames::LoadBalancing::RegionSelectionMode::SELECT, false); //  (nByte)0U, false, ExitGames::LoadBalancing::RegionSelectionMode::SELECT
+	mpPhotonLib->SetClient(PhotonClient);
+	mpPhotonLib->connect(TCHAR_TO_UTF8(*username), TCHAR_TO_UTF8(*serverAddress));
+}
+
+
+
 void AActor_PhotonVoice::Disconnect(void)
 {
 	mpPhotonLib->disconnect();
@@ -91,6 +106,9 @@ void AActor_PhotonVoice::ToggleEcho(void)
 void AActor_PhotonVoice::Voice_ConnectComplete(void)
 {
 	ConnectComplete();
+
+	LocalPlayer = Cast<APawn_Player>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	LocalPlayer->BP_ActorComponent_Playfab->UpdateFriend.AddDynamic(this, &AActor_PhotonVoice::UpdateFriendVoice);
 }
 
 //사운드 입력부 음소거
@@ -98,7 +116,7 @@ void AActor_PhotonVoice::SetMuteIn(bool bInput)
 {
 	if (mPhotonAudioIn)
 	{
-		mPhotonAudioIn->mute = bInput;
+		mPhotonAudioIn->bMute = bInput;
 	}
 	else
 	{
@@ -152,12 +170,13 @@ void AActor_PhotonVoice::setIschanging(bool Change)
 	mpPhotonLib->IsChanging = Change;
 }
 
+//채널 이동
 void AActor_PhotonVoice::Voice_ChangeOrJoinRoom(const FString& RoomFullName)
 {
 	mpPhotonLib->SetRoomName(RoomFullName);
 	if (getIsChanging()) // change중이라면 leaveRoom
 	{
-		mpPhotonLib->mLoadBalancingClient.opLeaveRoom();
+		mpPhotonLib->mLoadBalancingClient->opLeaveRoom();
 	}
 	else
 	{
@@ -165,7 +184,89 @@ void AActor_PhotonVoice::Voice_ChangeOrJoinRoom(const FString& RoomFullName)
 	}
 }
 
+//PlayFab 친구 갱신시 호출
+void AActor_PhotonVoice::UpdateFriendVoice()
+{
+	Voice_UpdateFriend();
+}
 
+//갱신된 차단 리스트에 등록되어 있으면 음소거
+//블랙리스트 음소거
+void AActor_PhotonVoice::Voice_UpdateFriend()
+{
+	if (mPhotonAudioOut.Num())
+	{
+		LocalPlayer = Cast<APawn_Player>(GetWorld()->GetFirstPlayerController()->GetPawn());
+		for (auto it : mPhotonAudioOut)
+		{
+			FString str = it->GetUserID();
+
+			if (LocalPlayer->BP_ActorComponent_Playfab->BlockList.Find(str))
+			{
+				it->SetMute(true);
+				UE_LOG(LogTemp, Log, TEXT("//Voice_UpdateFriend mute On :: %s"), *str);
+			}
+			else
+			{
+				it->SetMute(false);
+				UE_LOG(LogTemp, Log, TEXT("//Voice_UpdateFriend mute Off :: %s"), *str);
+			}
+		}
+	}
+}
+
+
+//에러 체크 메시지
+void AActor_PhotonVoice::ErrorCheckMessage(const FString& message, int error)
+{
+	UE_LOG(LogTemp, Log, TEXT("// ErrorCheckMessage :: %s"), *message);
+	UE_LOG(LogTemp, Log, TEXT("// ErrorCode :: %d"), error);
+}
+
+//입력된 유저 음량 입력
+bool AActor_PhotonVoice::SetSoundVolume(FString UserID, float volume)
+{
+	for (auto it : mPhotonAudioOut)
+	{
+		FString str = it->GetUserID();
+		if (str == UserID)
+		{
+			it->SetVolume(volume);
+			return true;
+		}
+	}
+	return false;
+}
+
+//입력된 유저의 음량 얻기
+float AActor_PhotonVoice::GetSoundVolume(FString UserID)
+{
+	for (auto it : mPhotonAudioOut)
+	{
+		FString str = it->GetUserID();
+		if (str == UserID)
+		{
+
+			UE_LOG(LogTemp, Log, TEXT("//GetSoundVolume uSER :: %s flosdt : " ), *str, it->GetVolume());
+			return it->GetVolume();
+		}
+	}
+	return 0.0f;
+}
+
+//입력된 유저의 음소거 상태 얻기
+bool AActor_PhotonVoice::GetMute(FString UserID)
+{
+	for (auto it : mPhotonAudioOut)
+	{
+		FString str = it->GetUserID();
+		if (str == UserID)
+		{
+			return it->GetMuteState();
+		}
+	}
+	return false;
+}
 
 
 #if WITH_EDITOR

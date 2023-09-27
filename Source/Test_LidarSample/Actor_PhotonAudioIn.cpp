@@ -32,7 +32,7 @@ void AActor_PhotonAudioIn::BeginPlay()
 	IConsoleManager::Get().FindConsoleVariable(TEXT("voice.SilenceDetectionThreshold"))->Set(0);
 	
 	//처음엔 사운드 비활성화 상태
-	mute = true;
+	bMute = true;
 }
 
 //음성 캡처 값들을 추출한다.
@@ -65,22 +65,22 @@ void AActor_PhotonAudioIn::onTimer()
 		if (!readBytes)
 			return;
 		
-		//테스트 빌드용 출력
-		/*if (GEngine)
-			GEngine->AddOnScreenDebugMessage(12, 15.0f, FColor::Blue, *FString::Printf(TEXT("!!!!! Captured: %d / %d"), readBytes, bytesAvailable));*/
-
+		////테스트 빌드용 출력
+		//if (GEngine)
+		//	GEngine->AddOnScreenDebugMessage(12, 15.0f, FColor::Blue, *FString::Printf(TEXT("!!!!! Captured: %d / %d"), readBytes, bytesAvailable));
+		
 		if (readBytes > 10)
 		{
-			//테스트 빌드용 출력
-			/*if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(13, 15.0f, FColor::Blue, *FString::Printf(TEXT("!!!!! Captured: %d %d %d %d %d %d %d %d %d %d"), buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9]));
-			}*/
+			////테스트 빌드용 출력
+			//if (GEngine)
+			//{
+			//	GEngine->AddOnScreenDebugMessage(13, 15.0f, FColor::Blue, *FString::Printf(TEXT("!!!!! Captured: %d %d %d %d %d %d %d %d %d %d"), buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9]));
+			//}
 
 			AveageMike(buf);
 			
 			//음소거 상태면 비어있는 버퍼를 보내준다.
-			if (mute)
+			if (bMute)
 			{
 				mpCallback(mpCallbackOpaque, b.getEmpty());
 			}
@@ -109,11 +109,16 @@ void AActor_PhotonAudioIn::AveageMike(const short* buf)
 		aveMike += buf[i];
 	}
 	aveMike /= 10;
-
+	CheckSoundIn(aveMike);
 	//if (GEngine)
 	//{
 	//	GEngine->AddOnScreenDebugMessage(14, 15.0f, FColor::Blue, *FString::Printf(TEXT("!!!!! average : %d "), aveMike));
 	//}
+}
+
+float AActor_PhotonAudioIn::GetAverMike()
+{
+	return aveMike;
 }
 
 
@@ -135,9 +140,7 @@ AudioIn::~AudioIn()
 void AudioIn::setCallback(void* callbackOpaque, void(*callback)(void*, const ExitGames::Voice::Buffer<short>&))
 {
 	mpActor->setCallback(callbackOpaque, callback);
-
 }
-
 
 int AudioIn::getSamplingRate(void) const
 {
@@ -165,11 +168,11 @@ ExitGames::Common::JString& AudioIn::toString(ExitGames::Common::JString& retStr
 
 
 
-void AudioIn::MuteInputSound(bool bMute)
+void AudioIn::MuteInputSound(bool mute)
 {
 	if (mpActor)
 	{
-		mpActor->mute = bMute;
+		mpActor->bMute = mute;
 	}
 }
 

@@ -44,7 +44,11 @@ void PhotonListner_Solaseado::service(void)
 void PhotonListner_Solaseado::Connect(const JString& userName, const JString& serverAddress)
 {
 	m_pClient->setAutoJoinLobby(true);
-	m_pClient->connect(ConnectOptions(AuthenticationValues().setUserID(JString() + GETTIMEMS()), userName, serverAddress));
+	//다중 아이디 접속을 위해서
+	//m_pClient->connect(ConnectOptions(AuthenticationValues().setUserID(JString() + GETTIMEMS()), userName, serverAddress));
+	//실 패키지시에 사용해야 할 것
+	//이걸 써야 정상적으로 마지막 접속 시간이 체크된다.
+	m_pClient->connect(ConnectOptions(AuthenticationValues().setUserID(userName), userName, serverAddress));
 }
 
 void PhotonListner_Solaseado::onAvailableRegions(const JVector<JString>& availableRegions, const JVector<JString>& availableRegionServers)
@@ -103,7 +107,7 @@ void PhotonListner_Solaseado::onRoomListUpdate(void) // Room프로퍼티가 변경될때�
 	TMap<int, int> RoomMap; // channel, PlayerCount;
 
 	// dummy일 경우에만
-	if (b_IsDummy) 
+	if (b_IsDummy)
 	{
 		int RoomListSize = m_pClient->getRoomList().getSize(); // 룸배열은 먼저 생성된 순서대로 설정됨
 		for (int i = 0; i < RoomListSize; i++)
@@ -123,7 +127,7 @@ void PhotonListner_Solaseado::onRoomListUpdate(void) // Room프로퍼티가 변경될때�
 		return;
 	}
 	// 더미가 아닌 메인클라이언트가 첫접속시에
-	if(b_IsFirstConnect) 
+	if (b_IsFirstConnect)
 	{
 		b_IsFirstConnect = false;
 		TArray<int> ChannelArray;
@@ -142,7 +146,7 @@ void PhotonListner_Solaseado::onRoomListUpdate(void) // Room프로퍼티가 변경될때�
 			int PlayerCount = m_pClient->getRoomList()[i]->getPlayerCount();	//플레이어수 
 			RoomMap.Add(FCString::Atoi(*Channel), PlayerCount);					// 맵에 넣어서
 		}
-	
+
 		for (int i = 1; i <= RoomMaxSize; i++)									// 룸탐색
 		{
 			if (RoomMap.Contains(i)) // 룸을 찾았다면
@@ -185,6 +189,7 @@ void PhotonListner_Solaseado::disconnectReturn(void)
 // 접속 성공 (로직변경) // connectReturn이 RoomListUpdate보다 빨리 호출해서 방정보 검색 불가능 -> RoomListUpdate로 방검색 후 접속
 void PhotonListner_Solaseado::connectReturn(int errorCode, const Common::JString& errorString, const Common::JString& region, const Common::JString& cluster)
 {
+	//UE_LOG(LogTemp, Log, TEXT("// PhotonListner_Solaseado::connectReturn"));
 	//onRoomListUpdate -> connectComplete(Channel)
 }
 
@@ -274,7 +279,7 @@ void PhotonListner_Solaseado::createRoomReturn(int localPlayerNr, const Common::
 			// 외형 정보
 			Hashtable table = p->getCustomProperties();
 			m_pView->AddPlayers(p->getNumber(), p->getName().UTF8Representation().cstr(), local, table);
-		}	
+		}
 		FString RoomNumber = Name.UTF8Representation().cstr();
 		m_pView->JoinOrCreateComplete(RoomNumber);
 	}
@@ -293,7 +298,7 @@ void PhotonListner_Solaseado::customEventAction(int playerNr, nByte eventCode, c
 	}
 
 	ExitGames::Common::Hashtable eventContent = ExitGames::Common::ValueObject<ExitGames::Common::Hashtable>(eventContentObj).getDataCopy();
-	
+
 	Object const* obj = eventContent.getValue("1");
 	if (!obj)	obj = eventContent.getValue((nByte)1);
 	if (!obj)	obj = eventContent.getValue(1);
@@ -315,7 +320,7 @@ void PhotonListner_Solaseado::customEventAction(int playerNr, nByte eventCode, c
 			int vZ = data[2];
 			int yaw = data[3];
 
-			m_pView->GetMoveAndRotation(playerNr,vX,vY,vZ,yaw);
+			m_pView->GetMoveAndRotation(playerNr, vX, vY, vZ, yaw);
 
 			return;
 		}
@@ -341,9 +346,9 @@ void PhotonListner_Solaseado::customEventAction(int playerNr, nByte eventCode, c
 			JString* data = ((ValueObject<JString*>*)obj)->getDataCopy();
 			FString PlayFabID = FString(UTF8_TO_TCHAR(data[0].UTF8Representation().cstr()));
 
-			m_pView->RecvFriendRequest(playerNr,PlayFabID);
+			m_pView->RecvFriendRequest(playerNr, PlayFabID);
 			return;
-			
+
 		}
 	}
 	//친구 수락
@@ -387,7 +392,7 @@ void PhotonListner_Solaseado::customEventAction(int playerNr, nByte eventCode, c
 			PlayerLoc.X = data[0];
 			PlayerLoc.Y = data[1];
 			PlayerLoc.Z = data[2];
-			
+
 			m_pView->UpdateMove(playerNr, PlayerLoc);
 			return;
 		}
@@ -480,7 +485,7 @@ void PhotonListner_Solaseado::setEventPause(bool ev)
 	m_pClient->opRaiseEvent(false, data, 11, Options);
 }
 
-void PhotonListner_Solaseado::SetFriendRequest(const int& Target ,const FString& PlayFabID)
+void PhotonListner_Solaseado::SetFriendRequest(const int& Target, const FString& PlayFabID)
 {
 	Hashtable data;
 	JString coords[] = { static_cast<JString>(TCHAR_TO_UTF8(*PlayFabID)) };
@@ -503,7 +508,7 @@ void PhotonListner_Solaseado::debugReturn(int debugLevel, const Common::JString&
 {
 	// Console::get().debugReturn(debugLevel, string);
 	FString str = UTF8_TO_TCHAR(string.UTF8Representation().cstr());
-	m_pView->ErrorCheckMessage(str, debugLevel);	
+	m_pView->ErrorCheckMessage(str, debugLevel);
 }
 
 void PhotonListner_Solaseado::clientErrorReturn(int errorCode)
@@ -557,10 +562,10 @@ void PhotonListner_Solaseado::InitJoinOrCreateRoom()
 	// 룸이름 세팅
 	FString FmyRoom = sRoomName + sRoomCount;
 	ExitGames::Common::JString JmyRoom = TCHAR_TO_UTF8(*FmyRoom);
-	
+
 	m_pClient->getLocalPlayer().addCustomProperties(mCharacterInfo);
 	RemoveCharacterInfo();
-	
+
 	RoomOptions options;
 	options.setMaxPlayers(MaxPlayerRoom);
 	options.setPublishUserID(true);
@@ -590,11 +595,11 @@ void PhotonListner_Solaseado::Move(FVector Loc)
 	float MoveZ = Loc.Z;
 	Hashtable data;
 
-	float coords[] = { static_cast<float>(MoveX),static_cast<float>(MoveY),static_cast<float>(MoveZ)};
+	float coords[] = { static_cast<float>(MoveX),static_cast<float>(MoveY),static_cast<float>(MoveZ) };
 	data.put((nByte)1, coords, 3);
 	RaiseEventOptions option;
 	option.setReceiverGroup(ExitGames::Lite::ReceiverGroup::ALL);
-	
+
 	m_pClient->opRaiseEvent(false, data, 50, option);
 }
 
@@ -638,8 +643,8 @@ void PhotonListner_Solaseado::UpdateNPC(TArray<FString> aID, TArray<FVector> aLo
 
 	for (int i = 1; i <= n; ++i)
 	{
-		float coords[] = { static_cast<float>(aLoc[i-1].X),static_cast<float>(aLoc[i-1].Y),static_cast<float>(aLoc[i-1].Z) };
-		data.put(TCHAR_TO_UTF8(*(aID[i-1])), coords, 3);
+		float coords[] = { static_cast<float>(aLoc[i - 1].X),static_cast<float>(aLoc[i - 1].Y),static_cast<float>(aLoc[i - 1].Z) };
+		data.put(TCHAR_TO_UTF8(*(aID[i - 1])), coords, 3);
 	}
 
 	//UE_LOG(LogTemp, Log, TEXT("// PhotonListner_Solaseado::UpdateNPC"));

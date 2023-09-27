@@ -20,6 +20,8 @@ public:
 	virtual void outCreate(int frequency, int channels, int bufferSamples);
 	virtual void outStart(void);
 	virtual void outWrite(ExitGames::Voice::Buffer<short> buf, int offsetSamples);
+
+	float aver = 0;
 private:
 	UAudioComponent* mpAudioComponent;
 	UProcedural* mpProcedural;
@@ -43,6 +45,8 @@ void AudioOut::outCreate(int frequency, int channels, int bufSamples)
 	mpProcedural->bLooping = false;
 	mpProcedural->bProcedural = true;
 
+
+	//사운드 클래스에서 음량 관리
 	mpProcedural->init(bufSamples);
 	mpProcedural->SoundClassObject = LoadObject<USoundClass>(nullptr, TEXT("SoundClass'/Game/Project/Sound/Voice.Voice'"));
 	mpAudioComponent->SetSound(mpProcedural);
@@ -57,10 +61,19 @@ void AudioOut::outStart(void)
 void AudioOut::outWrite(ExitGames::Voice::Buffer<short> buf, int offsetSamples)
 {
 	mpProcedural->write(buf, offsetSamples);
+
+
+
 	if (GEngine && buf.getSize() > 10)
 	{
 		short* b = buf.getArray();
-		//GEngine->AddOnScreenDebugMessage(3, 15.0f, FColor::Cyan, *FString::Printf(TEXT("AAudioOut push: %d: %d %d %d %d %d %d %d %d %d %d"), buf.getSize(), b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9]));
+		aver=0;
+		for (int i = 0; i < 10; ++i)
+		{
+			aver+=b[i];
+		}
+		aver /= 10;
+		//GEngine->AddOnScreenDebugMessage(3, 15.0f, FColor::Cyan, *FString::Printf(TEXT("DD %d AAudioOut push: %d: %d %d %d %d %d %d %d %d %d %d"), aver, buf.getSize(), b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9]));
 	}
 }
 
@@ -143,34 +156,96 @@ AActor_PhotonAudioOut::AActor_PhotonAudioOut()
 
 	mpAudioComponent->bAutoActivate = true;
 	mpAudioComponent->bAlwaysPlay = true;
+	
 }
+
 
 void AActor_PhotonAudioOut::BeginPlay()
 {
 	Super::BeginPlay();
-
 }
 
-void AActor_PhotonAudioOut::init(const ExitGames::Voice::ILogger& logger, ExitGames::Voice::AudioOutDelayConfig delayConfig, const ExitGames::Common::JString& logPrefix, bool debugInfo)
+//
+void AActor_PhotonAudioOut::init(const ExitGames::Voice::ILogger& logger, ExitGames::Voice::AudioOutDelayConfig delayConfig, 
+	const ExitGames::Common::JString& logPrefix, bool debugInfo, int InputPlayerNr, FString InputUserID)
 {
 	mpPlayer = new AudioOut(mpAudioComponent, logger, delayConfig, logPrefix, debugInfo);
+	mpPlayer->service();
+	UserID = InputUserID;
+	PlayerNr = InputPlayerNr;
+	fVolume = 1.0f;
 }
 
+//
 void AActor_PhotonAudioOut::finit(void)
 {
 	delete mpPlayer;
 }
 
+//
+void AActor_PhotonAudioOut::service(void)
+{
+	if (mpPlayer)
+	{
+		mpPlayer->service();
+	}
+}
+
+//플레이어 리턴
 ExitGames::Voice::IAudioOut<short>* AActor_PhotonAudioOut::getPlayer() const
 {
 	return mpPlayer;
 }
 
+//음소거 전환
 void AActor_PhotonAudioOut::SetMute(bool bInput)
 {
-	bMmute = bInput;
+	if (mpAudioComponent && bMmute!= bInput)
+	{
+		bMmute = bInput;
+		if (bMmute)
+		{
+			fVolume = mpAudioComponent->VolumeMultiplier;
+			mpAudioComponent->SetVolumeMultiplier(0.0f);
+		}
+		else
+		{
+			mpAudioComponent->SetVolumeMultiplier(fVolume);
+		}
+	}
+}
+
+//true 반환시 음소거 상태
+bool AActor_PhotonAudioOut::GetMuteState()
+{
+	return bMmute;
+}
+
+//볼륨 세팅
+void AActor_PhotonAudioOut::SetVolume(float volume)
+{
 	if (mpAudioComponent)
 	{
-		mpAudioComponent->SetActive(!bMmute);
+		if (!bMmute)
+		{
+			//음소거시 mpAudioComponent의 볼륨을 0으로 만들기 때문에 사운드값을 저장해야 할 변수를 만듬
+			fVolume = volume;
+			mpAudioComponent->SetVolumeMultiplier(fVolume);
+		}
 	}
+}
+
+//볼륨 얻기
+float AActor_PhotonAudioOut::GetVolume()
+{
+	//fVolume : 사운드 볼륨 저장값
+	return fVolume;
+}
+
+//사운드 평균 값(비쥬얼 시각화에 쓰일려고 했던 함수)
+float AActor_PhotonAudioOut::GetAverMike()
+{
+	AudioOut* audioOutPlayer = static_cast<AudioOut*>(mpPlayer);
+	
+	return audioOutPlayer->aver;
 }
